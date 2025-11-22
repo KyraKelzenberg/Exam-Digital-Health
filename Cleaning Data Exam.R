@@ -12,5 +12,6 @@ pacman::p_load(
   skimr
 )
 
-# IMPORT
+# import
 daten <- read.csv("persons_of_concern.csv")
+
