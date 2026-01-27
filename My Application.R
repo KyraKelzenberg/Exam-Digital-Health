@@ -187,11 +187,41 @@ df <- persons_of_concern_clean %>%
 
 ui <- fluidPage(
   
-  titlePanel("Post-Pandemic Global Refugee Flow"),
+  # ------------------------
+  # CSS für Hintergrund und Titel
+  # ------------------------
+  
+  tags$head(
+    tags$style(HTML("
+      body {
+        background-color: #e6f2ff; /* Helles Blau für die Website */
+      }
+      .title-panel {
+        background-color: #3399ff; /* Mittleres Blau für die obere Zeile */
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+      }
+      .well-panel {
+        background-color: #f8f9fa !important; /* Optional: beibehalten hellgrau für Panels */
+      }
+    "))
+  ),
+  
+  # ------------------------
+  # Titelzeile
+  # ------------------------
+  div(class = "title-panel", "Post-Pandemic Global Refugee Flow"),
+  
+  
   
   sidebarLayout(
     
     sidebarPanel(
+      width = 3, 
+      style = "background-color:#f8f9fa; padding:20px;",
       
       sliderInput(
         "year",
@@ -222,12 +252,24 @@ ui <- fluidPage(
           "Australia & Oceania",
           sort(unique(df$Country.of.Asylum))
         ),
-        selected = "Worldwide"
+        selected = "Worldwide",
+        selectize = TRUE
       )
     ),
     
     mainPanel(
-      plotlyOutput("map", height = "650px")
+      plotlyOutput("map"),
+      
+      wellPanel( 
+        style = "background-color: #f8f9fa;", 
+        h4("How to read the map"), 
+        p("This map visualizes global refugee movements from a selected country of origin to countries of asylum."), 
+        p("Each line represents a refugee flow. The thickness of the line corresponds to the total number of refugees for the selected years."), 
+        p("When multiple years are selected, refugee numbers are aggregated."), 
+        p("Hover over a destination country to see detailed information, including the country of origin, country of asylum, total refugees, and selected years.")
+      ),
+      
+      
     )
   )
 )
@@ -247,7 +289,7 @@ server <- function(input, output) {
         Year <= input$year[2]
       ) %>%
       
-      # ðŸ”¹ HIER passiert die Magie
+
       group_by(Country.of.Origin, Country.of.Asylum) %>%
       summarise(
         Refugees = sum(Refugees, na.rm = TRUE),
@@ -318,6 +360,7 @@ server <- function(input, output) {
         locationmode = "country names",
         split = ~group_id,
         mode = "lines",
+        showlegend = FALSE,
         line = list(
           width = ~rescale(Refugees, c(1, 8)),
           color = "steelblue"
@@ -332,6 +375,7 @@ server <- function(input, output) {
         locations = ~Country.of.Asylum,
         locationmode = "country names",
         mode = "markers",
+        showlegend = FALSE,
         text = ~paste0(
           "<b>Origin:</b> ", Country.of.Origin, "<br>",
           "<b>Asylum:</b> ", Country.of.Asylum, "<br>",
@@ -343,12 +387,22 @@ server <- function(input, output) {
       ) %>%
       
       layout(
+        margin = list(l=0,r=0,t=0,b=0),
+        showlegend = FALSE,
         geo = list(
           scope = "world",
           showland = TRUE,
           landcolor = "#f0f0f0",
-          showcountries = TRUE
+          showcountries = TRUE,
+          countrycolor = "#bdbdbd",
+          projection = list(type = "equirectangular")
+          
         )
+      ) %>%
+      config(
+        displayModeBar = TRUE,
+        displaylogo = FALSE,
+        scrollZoom = TRUE
       )
   })
 } 
